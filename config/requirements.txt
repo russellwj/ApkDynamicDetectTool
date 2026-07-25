@@ -1,0 +1,13 @@
+# APK安装、自动遍历与运行时抓包工具依赖
+
+# Android UI自动化框架
+uiautomator2>=3.0.0
+
+# APK解析工具（轻量级，纯Python实现）
+androguard>=3.4.0
+
+# PCAP文件解析库
+scapy>=2.5.0
+
+# 可选：进度条显示
+# tqdm>=4.65.0

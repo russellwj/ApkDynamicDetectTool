@@ -1,0 +1,7 @@
+# 测试与开发额外依赖(在 requirements.txt 基础上叠加)
+# 用法:
+#   pip install -r requirements.txt
+#   pip install -r requirements-dev.txt
+
+# 代码覆盖率测量(仅在使用 tests/run_tests.py --cov 时需要)
+coverage>=7.0
