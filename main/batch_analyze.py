@@ -5,12 +5,14 @@
 
 自动扫描 apk_input/ 目录下的所有APK文件，
 逐个调用 apk_capture_final.py 进行安装、抓包、分析、报告生成。
+也支持通过 --url 从远程下载APK后分析。
 
 用法:
   python batch_analyze.py
   python batch_analyze.py --max-depth 30
   python batch_analyze.py --wait-time 30
   python batch_analyze.py --skip demo.apk base.apk
+  python batch_analyze.py --url https://example.com/app1.apk https://example.com/app2.apk
 """
 
 import subprocess
@@ -20,6 +22,11 @@ import argparse
 import logging
 from pathlib import Path
 from datetime import datetime
+
+# 项目根目录(供 apk_dynamic_tool 包导入)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from apk_dynamic_tool.apk_downloader import ApkDownloader, ApkDownloadError
 
 # 配置日志
 logging.basicConfig(
@@ -139,6 +146,10 @@ def main():
         help='要跳过的APK文件名，如: --skip demo.apk base.apk'
     )
     parser.add_argument(
+        '--url', nargs='*', default=[],
+        help='APK下载URL列表，如: --url https://a.com/app.apk https://b.com/app2.apk'
+    )
+    parser.add_argument(
         '--serial', type=str, default=None,
         help='指定ADB设备序列号'
     )
@@ -162,8 +173,20 @@ def main():
 
     # 查找APK文件
     logger.info("=" * 60)
-    logger.info("📦 批量APK分析")
+    logger.info("批量APK分析")
     logger.info("=" * 60)
+
+    # URL下载: 先下载URL中的APK到 apk_input/, 再统一扫描
+    if args.url:
+        logger.info(f"从 {len(args.url)} 个URL下载APK...")
+        downloader = ApkDownloader(download_dir=str(APK_INPUT_DIR))
+        for url in args.url:
+            try:
+                downloaded = downloader.download(url)
+                logger.info(f"   下载成功: {downloaded.name}")
+            except ApkDownloadError as e:
+                logger.error(f"   下载失败: {url} -> {e}")
+        logger.info("")
 
     apk_files = find_apk_files(APK_INPUT_DIR, args.skip)
 

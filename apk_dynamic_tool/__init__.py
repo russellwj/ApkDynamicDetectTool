@@ -15,6 +15,7 @@ APK动态分析工具套件 (ApkDynamicDetectTool)
 模块结构:
   adb_helper.ADBHelper               ADB命令封装 (设备/包列表/差集检测)
   apk_analyzer.APKAnalyzer           APK静态解析 (混淆感知多方法融合)
+  apk_downloader.ApkDownloader       URL下载APK (HTTP下载+魔数验证)
   pcapdroid_controller.PCAPdroidController  PCAPdroid Intent API控制
   app_launcher.AppLauncher           精确启动Main Activity
   app_traverser.AppTraverser         深度优先页面遍历
@@ -26,13 +27,16 @@ APK动态分析工具套件 (ApkDynamicDetectTool)
 
 CLI入口(向后兼容):
   python apk_capture_final.py -a app.apk
+  python apk_capture_final.py --url https://example.com/app.apk
   python pcap_analyzer.py capture.pcap
   python report_generator.py app.apk -t report.json -s screenshots/
   python batch_analyze.py
+  python batch_analyze.py --url https://example.com/app1.apk https://example.com/app2.apk
 """
 
 from .adb_helper import ADBHelper
 from .apk_analyzer import APKAnalyzer
+from .apk_downloader import ApkDownloader, ApkDownloadError
 from .pcapdroid_controller import PCAPdroidController
 from .app_launcher import AppLauncher
 from .app_traverser import AppTraverser
@@ -48,6 +52,8 @@ from .report_generator import ReportGenerator
 __all__ = [
     'ADBHelper',
     'APKAnalyzer',
+    'ApkDownloader',
+    'ApkDownloadError',
     'PCAPdroidController',
     'AppLauncher',
     'AppTraverser',
