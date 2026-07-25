@@ -55,6 +55,7 @@ def main():
         epilog="""
 示例:
   python apk_capture_final.py -a app.apk
+  python apk_capture_final.py --url https://example.com/app.apk
   python apk_capture_final.py -a app.apk --max-depth 30
   python apk_capture_final.py -p com.example.app --no-install
 
@@ -64,6 +65,7 @@ def main():
     )
     
     parser.add_argument('-a', '--apk', help='APK文件路径')
+    parser.add_argument('--url', help='APK下载URL, 下载后自动检测 (与-a互斥)')
     parser.add_argument('-p', '--package', help='指定包名')
     parser.add_argument('-o', '--output', default='./output', help='输出目录')
     parser.add_argument('--max-depth', type=int, default=0, help='遍历深度，0表示不遍历，只等待wait_time秒 (默认: 0)')
@@ -90,6 +92,22 @@ def main():
         print("\n⚠ 建议安装androguard以获得更好的APK解析能力:")
         print("   pip install androguard")
         print("   (将使用备用方法解析APK)")
+    
+    # URL下载: --url 优先, 下载后替换 args.apk
+    if args.url:
+        if args.apk:
+            logger.error("❌ --url 和 -a/--apk 不可同时使用")
+            return
+        from .apk_downloader import ApkDownloader, ApkDownloadError
+        try:
+            logger.info("\n" + "=" * 60)
+            logger.info("下载APK")
+            logger.info("=" * 60)
+            downloader = ApkDownloader()
+            args.apk = str(downloader.download(args.url))
+        except ApkDownloadError as e:
+            logger.error(f"❌ APK下载失败: {e}")
+            return
     
     # 初始化ADB
     adb = ADBHelper()

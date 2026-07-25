@@ -10,6 +10,7 @@ ApkDynamicDetectTool/
 │   ├── __init__.py
 │   ├── adb_helper.py
 │   ├── apk_analyzer.py
+│   ├── apk_downloader.py
 │   ├── pcapdroid_controller.py
 │   ├── app_launcher.py
 │   ├── app_traverser.py
@@ -82,6 +83,7 @@ python main/apk_capture_final.py -a your_app.apk
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `-a, --apk` | APK文件路径（必需） | - |
+| `--url` | APK下载URL，下载后自动检测（与-a互斥） | - |
 | `-p, --package` | 指定包名（可选） | - |
 | `-o, --output` | 输出目录 | `./output` |
 | `--max-depth` | 遍历深度，0表示不遍历 | `0` |
@@ -95,6 +97,12 @@ python main/apk_capture_final.py -a your_app.apk
 ```bash
 # 基本用法（默认等待15秒）
 python main/apk_capture_final.py -a app.apk
+
+# 从URL下载APK并分析
+python main/apk_capture_final.py --url https://example.com/app.apk
+
+# 批量从URL下载并分析多个APK
+python main/batch_analyze.py --url https://a.com/app1.apk https://b.com/app2.apk
 
 # 等待30秒让应用充分运行
 python main/apk_capture_final.py -a app.apk --wait-time 30
