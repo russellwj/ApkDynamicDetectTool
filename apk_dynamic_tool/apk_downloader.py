@@ -63,13 +63,14 @@ class ApkDownloader:
         self.timeout = timeout
         self.progress_callback = progress_callback
 
-    def download(self, url: str, filename: Optional[str] = None) -> Path:
+    def download(self, url: str, filename: Optional[str] = None, headers: Optional[dict] = None) -> Path:
         """
         从URL下载APK文件
 
         Args:
             url: APK下载地址
             filename: 保存文件名(不含路径), None则从URL推断
+            headers: 自定义请求头(Cookie/Authorization等), None则不添加
 
         Returns:
             下载后的本地文件路径
@@ -93,7 +94,7 @@ class ApkDownloader:
         logger.info(f"   保存到: {local_path}")
 
         try:
-            self._download_file(url, local_path)
+            self._download_file(url, local_path, headers=headers)
         except ApkDownloadError:
             raise
         except Exception as e:
@@ -109,10 +110,13 @@ class ApkDownloader:
 
         return local_path
 
-    def _download_file(self, url: str, dest: Path) -> None:
+    def _download_file(self, url: str, dest: Path, headers: Optional[dict] = None) -> None:
         """执行HTTP下载, 支持重定向和进度"""
         req = urllib.request.Request(url)
         req.add_header('User-Agent', 'ApkDynamicDetectTool/1.0')
+        if headers:
+            for key, value in headers.items():
+                req.add_header(key, value)
 
         try:
             response = urllib.request.urlopen(req, timeout=self.timeout)

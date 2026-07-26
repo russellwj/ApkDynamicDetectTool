@@ -9,5 +9,8 @@ androguard>=3.4.0
 # PCAP文件解析库
 scapy>=2.5.0
 
+# Chrome DevTools Protocol 通信(用于Chrome监控模式)
+websocket-client>=1.6.0
+
 # 可选：进度条显示
 # tqdm>=4.65.0

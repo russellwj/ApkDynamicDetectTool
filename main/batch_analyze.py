@@ -147,7 +147,23 @@ def main():
     )
     parser.add_argument(
         '--url', nargs='*', default=[],
-        help='APK下载URL列表，如: --url https://a.com/app.apk https://b.com/app2.apk'
+        help='APK下载URL列表，如: --url https://a.com/app.apk https://b.com/app2.apk (与--monitor互斥)'
+    )
+    parser.add_argument(
+        '--monitor', action='store_true',
+        help='启动Chrome监控模式, 捕获APK下载链接 (与--url互斥)'
+    )
+    parser.add_argument(
+        '--monitor-port', type=int, default=9222,
+        help='Chrome远程调试端口 (默认: 9222)'
+    )
+    parser.add_argument(
+        '--monitor-timeout', type=int, default=300,
+        help='Chrome监控超时秒数 (默认: 300)'
+    )
+    parser.add_argument(
+        '--monitor-count', type=int, default=1,
+        help='等待捕获APK数量 (默认: 1)'
     )
     parser.add_argument(
         '--serial', type=str, default=None,
@@ -178,6 +194,9 @@ def main():
 
     # URL下载: 先下载URL中的APK到 apk_input/, 再统一扫描
     if args.url:
+        if args.monitor:
+            logger.error("❌ --url 和 --monitor 不可同时使用")
+            return
         logger.info(f"从 {len(args.url)} 个URL下载APK...")
         downloader = ApkDownloader(download_dir=str(APK_INPUT_DIR))
         for url in args.url:
@@ -186,6 +205,32 @@ def main():
                 logger.info(f"   下载成功: {downloaded.name}")
             except ApkDownloadError as e:
                 logger.error(f"   下载失败: {url} -> {e}")
+        logger.info("")
+
+    # Chrome监控模式: 通过CDP捕获APK下载链接(含鉴权头)
+    if args.monitor:
+        from apk_dynamic_tool.chrome_monitor import ChromeMonitor, ChromeMonitorError
+        try:
+            logger.info(f"启动Chrome监控, 等待 {args.monitor_count} 个APK下载...")
+            with ChromeMonitor(port=args.monitor_port) as monitor:
+                monitor.start()
+                captured_list = monitor.wait_for_apks(
+                    count=args.monitor_count,
+                    timeout=args.monitor_timeout,
+                )
+                downloader = ApkDownloader(download_dir=str(APK_INPUT_DIR))
+                for captured in captured_list:
+                    try:
+                        downloaded = downloader.download(
+                            captured.url,
+                            headers=captured.request_headers,
+                        )
+                        logger.info(f"   下载成功: {downloaded.name}")
+                    except ApkDownloadError as e:
+                        logger.error(f"   下载失败: {captured.url} -> {e}")
+        except ChromeMonitorError as e:
+            logger.error(f"❌ Chrome监控失败: {e}")
+            return
         logger.info("")
 
     apk_files = find_apk_files(APK_INPUT_DIR, args.skip)
