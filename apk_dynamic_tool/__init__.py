@@ -16,6 +16,7 @@ APK动态分析工具套件 (ApkDynamicDetectTool)
   adb_helper.ADBHelper               ADB命令封装 (设备/包列表/差集检测)
   apk_analyzer.APKAnalyzer           APK静态解析 (混淆感知多方法融合)
   apk_downloader.ApkDownloader       URL下载APK (HTTP下载+魔数验证)
+  chrome_monitor.ChromeMonitor       Chrome CDP监控 (捕获带鉴权的APK下载链接)
   pcapdroid_controller.PCAPdroidController  PCAPdroid Intent API控制
   app_launcher.AppLauncher           精确启动Main Activity
   app_traverser.AppTraverser         深度优先页面遍历
@@ -28,15 +29,18 @@ APK动态分析工具套件 (ApkDynamicDetectTool)
 CLI入口(向后兼容):
   python apk_capture_final.py -a app.apk
   python apk_capture_final.py --url https://example.com/app.apk
+  python apk_capture_final.py --monitor  # Chrome监控模式
   python pcap_analyzer.py capture.pcap
   python report_generator.py app.apk -t report.json -s screenshots/
   python batch_analyze.py
   python batch_analyze.py --url https://example.com/app1.apk https://example.com/app2.apk
+  python batch_analyze.py --monitor --monitor-count 3
 """
 
 from .adb_helper import ADBHelper
 from .apk_analyzer import APKAnalyzer
 from .apk_downloader import ApkDownloader, ApkDownloadError
+from .chrome_monitor import ChromeMonitor, ChromeMonitorError, CapturedRequest
 from .pcapdroid_controller import PCAPdroidController
 from .app_launcher import AppLauncher
 from .app_traverser import AppTraverser
@@ -54,6 +58,9 @@ __all__ = [
     'APKAnalyzer',
     'ApkDownloader',
     'ApkDownloadError',
+    'ChromeMonitor',
+    'ChromeMonitorError',
+    'CapturedRequest',
     'PCAPdroidController',
     'AppLauncher',
     'AppTraverser',
@@ -66,4 +73,4 @@ __all__ = [
     'ReportGenerator',
 ]
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'

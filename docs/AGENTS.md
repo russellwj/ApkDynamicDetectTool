@@ -64,8 +64,8 @@ python -m unittest tests.test_pcap_analyzer.TestExtractSni.test_valid_sni -v   #
 ```
 
 测试统计:
-- 152 个用例, 7 个测试模块, 1 个共享夹具模块
-- 全部通过耗时 < 1 秒(已 patch `time.sleep`)
+- 238 个用例, 8 个测试模块, 1 个共享夹具模块
+- 全部通过耗时 < 40 秒(已 patch `time.sleep`)
 - 当前覆盖率 48%(其余代码需真实Android设备, 不在单测覆盖)
 
 依赖: 使用 `--cov` 需额外安装 `pip install -r config/requirements-dev.txt`(含 coverage>=7.0)
@@ -76,6 +76,8 @@ python -m unittest tests.test_pcap_analyzer.TestExtractSni.test_valid_sni -v   #
 |----------|----------|--------|
 | test_adb_helper | ADBHelper(mock subprocess): run_adb/check_device/get_screen_size/get_installed_packages/detect_installed_package/get_launcher_activity | 22 |
 | test_apk_analyzer | APKAnalyzer: _is_obfuscated_package/_select_best_candidate/_select_activity/_extract_from_raw_manifest/get_package_info(真实demo.apk)/_find_aapt | 18 |
+| test_apk_downloader | ApkDownloader: _validate_url/_infer_filename/_validate_apk/download(成功/失败/批量)/capture_pipeline+batch_analyze集成 | 30 |
+| test_chrome_monitor | ChromeMonitor: _is_apk_request/CapturedTarget/_discover_targets/CDP连接/事件解析/wait_for_apk(s)/ApkDownloader headers/pipeline集成 | 56 |
 | test_pcapdroid_controller | PCAPdroidController: _run_api命令构造/check_installation/_read_api_key_from_file/_find_latest_pcap_file/_check_vpn_active/_clear_old_pcap_files | 15 |
 | test_pcap_analyzer | PCAPAnalyzer + IPInfoProvider: _extract_dns_answer/_extract_sni/_analyze_dns/_analyze_http/_analyze_tls_sni/_analyze_ip/_analyze_tcp/_analyze_udp/全流程load+analyze+generate_report/IPInfoProvider云厂商识别 | 39 |
 | test_report_generator | ReportGenerator: _is_private_ip/_is_clean_ip/_cloud_badge_html_simple/_aggregate_ip_locations/_aggregate_time/_collect_unified_records/_format_url_cell/端到端HTML生成 | 30 |
@@ -101,6 +103,8 @@ python -m unittest tests.test_pcap_analyzer.TestExtractSni.test_valid_sni -v   #
 python main/apk_capture_final.py -a app.apk
 python main/apk_capture_final.py -a app.apk --max-depth 30
 python main/apk_capture_final.py -p com.example.app --no-install
+python main/apk_capture_final.py --url https://example.com/app.apk
+python main/apk_capture_final.py --monitor  # Chrome监控模式
 
 # 单独分析PCAP
 python main/pcap_analyzer.py capture.pcap -o report.json

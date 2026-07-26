@@ -65,7 +65,10 @@ def main():
     )
     
     parser.add_argument('-a', '--apk', help='APK文件路径')
-    parser.add_argument('--url', help='APK下载URL, 下载后自动检测 (与-a互斥)')
+    parser.add_argument('--url', help='APK下载URL, 下载后自动检测 (与-a/--monitor互斥)')
+    parser.add_argument('--monitor', action='store_true', help='启动Chrome监控模式, 捕获APK下载链接 (与-a/--url互斥)')
+    parser.add_argument('--monitor-port', type=int, default=9222, help='Chrome远程调试端口 (默认: 9222)')
+    parser.add_argument('--monitor-timeout', type=int, default=300, help='Chrome监控超时秒数 (默认: 300)')
     parser.add_argument('-p', '--package', help='指定包名')
     parser.add_argument('-o', '--output', default='./output', help='输出目录')
     parser.add_argument('--max-depth', type=int, default=0, help='遍历深度，0表示不遍历，只等待wait_time秒 (默认: 0)')
@@ -98,6 +101,9 @@ def main():
         if args.apk:
             logger.error("❌ --url 和 -a/--apk 不可同时使用")
             return
+        if args.monitor:
+            logger.error("❌ --url 和 --monitor 不可同时使用")
+            return
         from .apk_downloader import ApkDownloader, ApkDownloadError
         try:
             logger.info("\n" + "=" * 60)
@@ -105,6 +111,33 @@ def main():
             logger.info("=" * 60)
             downloader = ApkDownloader()
             args.apk = str(downloader.download(args.url))
+        except ApkDownloadError as e:
+            logger.error(f"❌ APK下载失败: {e}")
+            return
+
+    # Chrome监控模式: 通过CDP捕获APK下载链接(含鉴权头)
+    if args.monitor:
+        if args.apk:
+            logger.error("❌ --monitor 和 -a/--apk 不可同时使用")
+            return
+        from .chrome_monitor import ChromeMonitor, ChromeMonitorError
+        from .apk_downloader import ApkDownloader, ApkDownloadError
+        try:
+            logger.info("\n" + "=" * 60)
+            logger.info("监控Chrome网络请求")
+            logger.info("=" * 60)
+            with ChromeMonitor(port=args.monitor_port) as monitor:
+                monitor.start()
+                captured = monitor.wait_for_apk(timeout=args.monitor_timeout)
+                logger.info(f"捕获到APK下载链接: {captured.url}")
+                downloader = ApkDownloader()
+                args.apk = str(downloader.download(
+                    captured.url,
+                    headers=captured.request_headers,
+                ))
+        except ChromeMonitorError as e:
+            logger.error(f"❌ Chrome监控失败: {e}")
+            return
         except ApkDownloadError as e:
             logger.error(f"❌ APK下载失败: {e}")
             return

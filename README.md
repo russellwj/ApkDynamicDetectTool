@@ -11,6 +11,7 @@ ApkDynamicDetectTool/
 │   ├── adb_helper.py
 │   ├── apk_analyzer.py
 │   ├── apk_downloader.py
+│   ├── chrome_monitor.py          # Chrome CDP 监控: 捕获APK下载链接
 │   ├── pcapdroid_controller.py
 │   ├── app_launcher.py
 │   ├── app_traverser.py
@@ -83,7 +84,10 @@ python main/apk_capture_final.py -a your_app.apk
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `-a, --apk` | APK文件路径（必需） | - |
-| `--url` | APK下载URL，下载后自动检测（与-a互斥） | - |
+| `--url` | APK下载URL，下载后自动检测（与-a/--monitor互斥） | - |
+| `--monitor` | 启动Chrome监控模式，捕获APK下载链接（与-a/--url互斥） | `False` |
+| `--monitor-port` | Chrome远程调试端口 | `9222` |
+| `--monitor-timeout` | Chrome监控超时秒数 | `300` |
 | `-p, --package` | 指定包名（可选） | - |
 | `-o, --output` | 输出目录 | `./output` |
 | `--max-depth` | 遍历深度，0表示不遍历 | `0` |
@@ -103,6 +107,17 @@ python main/apk_capture_final.py --url https://example.com/app.apk
 
 # 批量从URL下载并分析多个APK
 python main/batch_analyze.py --url https://a.com/app1.apk https://b.com/app2.apk
+
+# Chrome监控模式（捕获带鉴权的动态下载链接）
+# 1. 先启动Chrome: chrome --remote-debugging-port=9222
+# 2. 运行工具，在Chrome中登录站点并点击下载
+python main/apk_capture_final.py --monitor
+
+# Chrome监控模式（自定义端口和超时）
+python main/apk_capture_final.py --monitor --monitor-port 8444 --monitor-timeout 600
+
+# 批量Chrome监控（等待捕获多个APK）
+python main/batch_analyze.py --monitor --monitor-count 3
 
 # 等待30秒让应用充分运行
 python main/apk_capture_final.py -a app.apk --wait-time 30

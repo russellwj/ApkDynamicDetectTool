@@ -8,6 +8,8 @@ ApkDynamicDetectTool/
 │   ├── __init__.py                #   包入口, 重导出主要类与函数
 │   ├── adb_helper.py              #   ADBHelper  - ADB命令封装
 │   ├── apk_analyzer.py            #   APKAnalyzer - APK静态解析(混淆感知+多方法融合)
+│   ├── apk_downloader.py          #   ApkDownloader - URL下载APK(HTTP+魔数验证+自定义头)
+│   ├── chrome_monitor.py          #   ChromeMonitor - CDP监控捕获带鉴权APK下载链接
 │   ├── pcapdroid_controller.py    #   PCAPdroidController - 通过官方Intent API控制抓包
 │   ├── app_launcher.py            #   AppLauncher - 精确启动Main Activity
 │   ├── app_traverser.py           #   AppTraverser - 深度优先页面遍历
@@ -28,6 +30,8 @@ ApkDynamicDetectTool/
 │   ├── _fixtures.py                 #   共享夹具: 合成TLS ClientHello / FakeDevice / fake adb
 │   ├── test_adb_helper.py           #   22 测试: ADBHelper(mock subprocess)
 │   ├── test_apk_analyzer.py         #   18 测试: APKAnalyzer(混淆检测/候选择优/真实APK)
+│   ├── test_apk_downloader.py        #   30 测试: ApkDownloader(URL下载/魔数验证/批量/集成)
+│   ├── test_chrome_monitor.py        #   56 测试: ChromeMonitor(CDP/事件解析/APK识别/等待/集成)
 │   ├── test_pcapdroid_controller.py #   15 测试: Intent参数构造/api_key/pcap查找/VPN
 │   ├── test_pcap_analyzer.py        #   39 测试: Scapy合成包验证DNS/HTTP/TLS SNI/报告生成
 │   ├── test_report_generator.py     #   30 测试: 聚合/清洗/格式化纯函数+端到端HTML
@@ -42,6 +46,7 @@ ApkDynamicDetectTool/
 ├── docs/                            # 开发与维护文档
 │   ├── AGENTS.md                    #   构建与测试说明(供CI/Agent参考)
 │   ├── PROJECT_STRUCTURE.md         #   本文件: 目录结构说明
+│   ├── SPEC_CHROME_MONITOR.md       #   Chrome监控模块规格说明(SDD)
 │   └── TOOLS_AND_DEPLOYMENT.md      #   工具原理与部署清单
 │
 ├── config/                          # 配置文件
@@ -101,6 +106,23 @@ APK静态解析(混淆感知+多方法融合):
 - `_is_obfuscated_package`: 检测大写字母/随机字符特征
 - `_collect_package_candidates`: 并行收集 androguard / aapt / raw_manifest 三路候选
 - `_select_best_candidate`: 按置信度择优(多方法一致 > 非混淆 > raw_manifest兜底)
+
+### apk_downloader.ApkDownloader
+URL下载APK文件(HTTP下载+魔数验证+自定义请求头):
+- `download`: 从URL下载APK, 支持 headers 参数传递鉴权信息(Cookie/Authorization等)
+- `_validate_url`: URL格式校验(http/https)
+- `_infer_filename`: 从URL推断文件名, 推不掉则用时间戳
+- `_validate_apk`: 通过PK\x03\x04魔数验证文件是否为APK(ZIP)格式
+- `download_batch`: 批量下载多个URL
+
+### chrome_monitor.ChromeMonitor
+通过 Chrome DevTools Protocol (CDP) 监控 Chrome 网络请求, 捕获带鉴权的APK下载链接:
+- `_discover_target_ws_url`: HTTP发现Chrome调试目标(type=page)
+- `_send_cdp`: 发送CDP命令(Network.enable等)
+- `_event_loop`: 后台线程接收CDP事件(requestWillBeSent/responseReceived)
+- `_is_apk_request`: APK识别算法(URL模式+mimeType组合判断)
+- `wait_for_apk` / `wait_for_apks`: 阻塞等待1个/多个APK下载请求被捕获
+- `CapturedRequest`: 数据结构(url/method/headers/status/mime/length)
 
 ### pcapdroid_controller.PCAPdroidController
 通过 PCAPdroid 官方 CaptureCtrl Activity + Intent API 控制抓包, 无需UI点击:
